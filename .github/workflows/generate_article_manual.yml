@@ -1,0 +1,35 @@
+name: Manual AI Article Generator
+
+on:
+  workflow_dispatch:  # 🔥 Pozwala odpalać ręcznie z interfejsu GitHub
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install transformers
+
+      - name: Generate article with Hugging Face
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          python3 generate_article.py
+
+      - name: Commit and push changes
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .
+          git commit -m "📝 Dodano artykuł AI (manual)"
+          git push
