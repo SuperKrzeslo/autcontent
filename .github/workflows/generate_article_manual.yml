@@ -1,4 +1,4 @@
-name: Manual AI Article Generator
+name: Generate AI Article Manually
 
 on:
   workflow_dispatch:
@@ -12,29 +12,25 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: 📦 Checkout repo
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
         with:
           persist-credentials: true
 
-      - name: 🐍 Set up Python
-        uses: actions/setup-python@v4
+      - uses: actions/setup-python@v4
         with:
           python-version: '3.11'
 
-      - name: 🔧 Install dependencies
-        run: |
+      - run: |
+          python -m pip install --upgrade pip
           pip install torch transformers
 
-      - name: 📝 Generate AI article
+      - run: python3 generate_article.py
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
-        run: python3 generate_article.py
 
-      - name: 🚀 Commit and push article
-        run: |
+      - run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add articles/*.md
-          git commit -m "🧠 Dodano nowy artykuł AI"
+          git commit -m "🧠 Dodano nowy artykuł AI (manual)"
           git push
