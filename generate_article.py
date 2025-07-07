@@ -1,4 +1,4 @@
-from transformers import pipeline, AutoModelForCausalLM, AutoTokenizer
+from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
 from datetime import datetime
 import os
 import re
@@ -12,24 +12,31 @@ os.makedirs(ARTICLES_DIR, exist_ok=True)
 
 today = datetime.now().strftime("%Y-%m-%d")
 seed = random.randint(1000, 9999)
-prompt = f"Nowości w świecie technologii na dzień {today}. Napisz profesjonalny artykuł w stylu magazynu naukowego."
+prompt = f"Nowości w świecie technologii na dzień {today}. Napisz profesjonalny artykuł z leadem i wnioskami."
 
-# === Generator tekstu ===
-model_name = "mistralai/Mistral-7B-Instruct-v0.2"
+# === Wczytaj model Gwen 2.5 ===
+model_name = "mistralai/Gemma-2-5B"  # Gwen 2.5 = Gemma 2 (Open Weight 2.5B model)
+
 tokenizer = AutoTokenizer.from_pretrained(model_name)
 model = AutoModelForCausalLM.from_pretrained(
     model_name,
-    torch_dtype=torch.float16,
+    torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32,
     device_map="auto"
 )
 
-generator = pipeline("text-generation", model=model, tokenizer=tokenizer, seed=seed)
+generator = pipeline(
+    "text-generation",
+    model=model,
+    tokenizer=tokenizer,
+    seed=seed
+)
 
-result = generator(
+# === Generuj tekst ===
+response = generator(
     prompt,
     max_new_tokens=512,
     do_sample=True,
-    temperature=0.9,
+    temperature=0.85,
     top_k=50,
     top_p=0.95,
     num_return_sequences=1
@@ -39,8 +46,8 @@ result = generator(
 def sanitize(text):
     return re.sub(r'[^\w\s-]', '', text).strip()
 
-title = sanitize(result.strip().split('.')[0])[:60]
-lead = result.strip().split('.')[0] + "."
+title = sanitize(response.strip().split('.')[0])[:60]
+lead = response.strip().split('.')[0] + "."
 
 filename = f"article-{today}-{seed}.html"
 filepath = os.path.join(ARTICLES_DIR, filename)
@@ -57,7 +64,7 @@ article_html = f"""<!DOCTYPE html>
     <div class="container">
         <a href="../index.html" class="back-link">← Powrót do strony głównej</a>
         <h1>{title}</h1>
-        <p>{result}</p>
+        <p>{response}</p>
     </div>
 </body>
 </html>
@@ -108,7 +115,7 @@ else:
     with open(index_path, "w", encoding="utf-8") as f:
         f.write(updated_html)
 
-# === Styl CSS (tylko raz) ===
+# === Styl CSS jeśli brak ===
 style_path = os.path.join(SITE_DIR, "style.css")
 if not os.path.exists(style_path):
     with open(style_path, "w", encoding="utf-8") as f:
@@ -187,4 +194,4 @@ main {
 }
 """)
 
-print(f"✅ Wygenerowano nowy artykuł: {filename} i dodano do index.html")
+print(f"✅ Artykuł zapisany jako: {filename} i dodany do index.html")
