@@ -14,12 +14,15 @@ today = datetime.now().strftime("%Y-%m-%d")
 seed = random.randint(1000, 9999)
 prompt = f"Nowości w świecie technologii na dzień {today}. Napisz profesjonalny artykuł z leadem i wnioskami."
 
-# === Wczytaj model Gwen 2.5 ===
-model_name = "google/gemma-2b"  # Gwen 2.5 = Gemma 2 (Open Weight 2.5B model)
+# === Token z Hugging Face z ENV ===
+hf_token = os.getenv("HUGGINGFACE_TOKEN")
+model_name = "google/gemma-2b"  # Gwen 2.5 ≈ Gemma 2B
 
-tokenizer = AutoTokenizer.from_pretrained(model_name)
+# === Wczytaj model ===
+tokenizer = AutoTokenizer.from_pretrained(model_name, token=hf_token)
 model = AutoModelForCausalLM.from_pretrained(
     model_name,
+    token=hf_token,
     torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32,
     device_map="auto"
 )
@@ -31,7 +34,7 @@ generator = pipeline(
     seed=seed
 )
 
-# === Generuj tekst ===
+# === Generuj treść ===
 response = generator(
     prompt,
     max_new_tokens=512,
@@ -42,17 +45,16 @@ response = generator(
     num_return_sequences=1
 )[0]["generated_text"]
 
-# === Sanitizacja ===
+# === Sanitizacja i nazwy ===
 def sanitize(text):
     return re.sub(r'[^\w\s-]', '', text).strip()
 
 title = sanitize(response.strip().split('.')[0])[:60]
 lead = response.strip().split('.')[0] + "."
-
 filename = f"article-{today}-{seed}.html"
 filepath = os.path.join(ARTICLES_DIR, filename)
 
-# === HTML pełnego artykułu ===
+# === HTML artykułu ===
 article_html = f"""<!DOCTYPE html>
 <html lang="pl">
 <head>
@@ -73,7 +75,7 @@ article_html = f"""<!DOCTYPE html>
 with open(filepath, "w", encoding="utf-8") as f:
     f.write(article_html)
 
-# === Miniaturka do index.html ===
+# === Miniaturka do strony głównej ===
 thumbnail_html = f"""
 <div class="card">
     <img src="https://source.unsplash.com/400x200/?technology,ai" alt="AI Image">
@@ -115,7 +117,7 @@ else:
     with open(index_path, "w", encoding="utf-8") as f:
         f.write(updated_html)
 
-# === Styl CSS jeśli brak ===
+# === Styl (jeśli brak) ===
 style_path = os.path.join(SITE_DIR, "style.css")
 if not os.path.exists(style_path):
     with open(style_path, "w", encoding="utf-8") as f:
