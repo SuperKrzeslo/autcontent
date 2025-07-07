@@ -1,37 +1,41 @@
-name: Generate AI Article
+name: Manual AI Article Generatorrrr
 
 on:
-  schedule:
-    - cron: '0 6 * * *'  # 6:00 UTC = 8:00 PL
   workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: read
 
 jobs:
   generate:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo
+      - name: 📦 Checkout repo
         uses: actions/checkout@v3
+        with:
+          persist-credentials: true
 
-      - name: Set up Python
+      - name: 🐍 Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
 
-      - name: Install dependencies
+      - name: 🔧 Install dependencies
         run: |
-          pip install transformers
+          pip install torch transformers
 
-      - name: Generate article
-        env:
-          HF_TOKEN: ${{ secrets.HF_TOKEN }}
-        run: |
-          python3 generate_article.py
+      - name: 📝 Generate AI article
+        run: python3 generate_article.py
 
-      - name: Commit and push changes
+      - name: 🧩 Update site index
+        run: python3 update_index.py
+
+      - name: 🚀 Commit and push
         run: |
           git config --global user.name "github-actions[bot]"
-          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add .
-          git commit -m "📝 Dodano nowy artykuł AI"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add articles/*.md site/
+          git commit -m "📄 Add new AI article" || echo "No changes"
           git push
