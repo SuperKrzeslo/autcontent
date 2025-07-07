@@ -2,3 +2,7 @@ topics:
   - "Nowe trendy w e‑commerce"
   - "AI w marketingu: studia przypadków"
   - "5 najlepszych praktyk SEO w 2025"
+collections:
+  articles:
+    output: true
+    permalink: /articles/:name/
