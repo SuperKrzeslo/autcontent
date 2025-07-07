@@ -1,33 +1,46 @@
-name: 🔁 Generate & Deploy Article
+name: Manual AI Article Generator
 
 on:
-  schedule:
-    - cron: '0 8 * * *'  # Codziennie o 8:00 rano UTC
-  workflow_dispatch:     # Możliwość ręcznego uruchomienia
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
 
 jobs:
-  build-and-deploy:
+  generate-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: 📥 Checkout repo
-        uses: actions/checkout@v4
+      - name: 📦 Checkout repo
+        uses: actions/checkout@v3
 
       - name: 🐍 Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v4
         with:
           python-version: '3.11'
 
-      - name: 📦 Install dependencies
+      - name: 🔧 Install dependencies
         run: |
-          python -m pip install --upgrade pip
-          pip install torch transformers
+          pip install torch transformers markdown2
 
-      - name: 🧠 Generate new article
-        run: python3 generate_article.py
+      - name: 📝 Generate AI article
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          python3 generate_article.py
+
+      - name: 🧪 Commit generated content
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add articles/ site/
+          git commit -m "🧠 Dodano nowy artykuł AI i zaktualizowano stronę" || echo "Brak zmian"
+          git push
 
       - name: 🚀 Deploy to GitHub Pages
-      uses: peaceiris/actions-gh-pages@v4
-      with:
-      personal_token: ${{ secrets.GH_PAT }}
-       publish_dir: ./site
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          personal_token: ${{ secrets.GH_PAT }}
+          publish_dir: ./site
