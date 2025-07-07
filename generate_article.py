@@ -15,7 +15,7 @@ seed = random.randint(1000, 9999)
 prompt = f"Nowości w świecie technologii na dzień {today}. Napisz profesjonalny artykuł z leadem i wnioskami."
 
 # === Wczytaj model Gwen 2.5 ===
-model_name = "mistralai/Gemma-2-5B"  # Gwen 2.5 = Gemma 2 (Open Weight 2.5B model)
+model_name = "google/gemma-2b"  # Gwen 2.5 = Gemma 2 (Open Weight 2.5B model)
 
 tokenizer = AutoTokenizer.from_pretrained(model_name)
 model = AutoModelForCausalLM.from_pretrained(
