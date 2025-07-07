@@ -9,41 +9,36 @@ permissions:
   id-token: write
 
 jobs:
-  generate:
+  build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: 📦 Checkout repo
-        uses: actions/checkout@v3
-        with:
-          persist-credentials: true
+      - name: 📦 Checkout
+        uses: actions/checkout@v4
 
       - name: 🐍 Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
 
-      - name: 🔧 Install dependencies
-        run: |
-          pip install torch transformers markdown
+      - name: 🔧 Install deps
+        run: pip install torch transformers markdown
 
-      - name: 📝 Generate AI article
-        env:
-          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+      - name: 📝 Generate article
         run: python3 generate_article.py
 
-      - name: 🖥️ Generate static site
+      - name: 🌐 Generate site
         run: python3 generate_site.py
 
-      - name: 🚀 Commit and push article
+      - name: 📤 Commit changes
         run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
           git add articles/*.md site/
-          git commit -m "🧠 Dodano nowy artykuł AI i zaktualizowano stronę"
+          git commit -m "Dodano artykuł i wygenerowano stronę" || echo "Brak zmian"
           git push
 
-      - name: 🌐 Deploy to GitHub Pages
+      - name: 🚀 Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
