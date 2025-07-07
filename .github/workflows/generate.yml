@@ -1,9 +1,9 @@
-name: Generate Daily Article
+name: Generate AI Article
 
 on:
   schedule:
-    - cron: '0 8 * * *' # codziennie o 8:00 UTC (10:00 czasu PL)
-  workflow_dispatch:      # pozwala ręcznie odpalić
+    - cron: '0 6 * * *'  # 6:00 UTC = 8:00 PL
+  workflow_dispatch:
 
 jobs:
   generate:
@@ -16,56 +16,22 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: 3.11
+          python-version: '3.11'
 
       - name: Install dependencies
-        run: pip install requests
+        run: |
+          pip install transformers
 
-      - name: Generate content
+      - name: Generate article
         env:
-          HF_TOKEN: ${{ secrets.HUGGINGFACE_TOKEN }}
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
-          python3 <<EOF
-          import requests
-          import datetime
-          import os
+          python3 generate_article.py
 
-          HF_TOKEN = os.getenv("HF_TOKEN")
-          if not HF_TOKEN:
-              raise ValueError("Brak tokenu HuggingFace. Ustaw go w sekcji Secrets jako 'HUGGINGFACE_TOKEN'.")
-
-          today = datetime.date.today().isoformat()
-
-          headers = {
-              "Authorization": f"Bearer {HF_TOKEN}"
-          }
-
-          prompt = f"Napisz krótki artykuł blogowy o trendach technologicznych na dzień {today} w stylu lekkim, przystępnym, SEO-friendly, po polsku."
-
-          response = requests.post(
-              "https://api-inference.huggingface.co/models/google/flan-t5-large",
-              headers=headers,
-              json={"inputs": prompt},
-              timeout=60
-          )
-
-          if response.status_code != 200:
-              raise Exception(f"Błąd API HuggingFace: {response.status_code} - {response.text}")
-
-          text = response.json()[0]["generated_text"]
-
-          file_path = f"articles/{today}.md"
-          os.makedirs("articles", exist_ok=True)
-          with open(file_path, "w", encoding="utf-8") as f:
-              f.write(f"# Artykuł na {today}\n\n{text}\n")
-
-          print(f"Zapisano do {file_path}")
-          EOF
-
-      - name: Commit changes
+      - name: Commit and push changes
         run: |
-          git config --global user.name 'github-actions'
-          git config --global user.email 'github-actions@users.noreply.github.com'
-          git add articles/
-          git commit -m "Dodano artykuł z dnia $(date +'%Y-%m-%d')" || echo "Brak zmian do zatwierdzenia"
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .
+          git commit -m "📝 Dodano nowy artykuł AI"
           git push
