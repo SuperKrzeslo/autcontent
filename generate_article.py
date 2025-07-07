@@ -16,7 +16,7 @@ prompt = f"Nowości w świecie technologii na dzień {today}. Napisz profesjonal
 
 # === Token z Hugging Face z ENV ===
 hf_token = os.getenv("HUGGINGFACE_TOKEN")
-model_name = "google/gemma-2b"  # Gwen 2.5 ≈ Gemma 2B
+model_name = "tiiuae/falcon-rw-1b"  # Gwen 2.5 ≈ Gemma 2B
 
 # === Wczytaj model ===
 tokenizer = AutoTokenizer.from_pretrained(model_name, token=hf_token)
