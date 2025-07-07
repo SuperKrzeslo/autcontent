@@ -27,7 +27,7 @@ jobs:
 
       - name: 📝 Generate AI article
         env:
-          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          HF_TOKEN: ${{ secrets.HUGGINGFACE_TOKEN }}
         run: |
           python3 generate_article.py
 
