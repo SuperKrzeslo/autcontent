@@ -1,0 +1,4 @@
+transformers>=4.0.0
+huggingface-hub>=0.13.0
+PyYAML
+python-frontmatter
