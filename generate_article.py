@@ -5,7 +5,6 @@ import os
 generator = pipeline("text-generation", model="gpt2")
 
 prompt = "The future of artificial intelligence in everyday life"
-
 result = generator(prompt, max_length=300, num_return_sequences=1)[0]["generated_text"]
 
 # Zapisz do pliku
