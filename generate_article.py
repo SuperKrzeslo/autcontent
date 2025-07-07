@@ -1,16 +1,21 @@
-from transformers import pipeline
-from datetime import datetime
 import os
+import datetime
+from transformers import pipeline
 
-generator = pipeline("text-generation", model="gpt2")
+def main():
+    generator = pipeline("text-generation", model="gpt2")
+    prompt = "Najnowsze trendy technologiczne w 2025 roku"
+    result = generator(prompt, max_length=300, num_return_sequences=1)[0]["generated_text"]
 
-prompt = "The future of artificial intelligence in everyday life"
+    today = datetime.date.today().strftime("%Y-%m-%d")
+    os.makedirs("articles", exist_ok=True)
+    filename = f"articles/article-{today}.md"
 
-result = generator(prompt, max_length=300, num_return_sequences=1)[0]["generated_text"]
+    with open(filename, "w", encoding="utf-8") as f:
+        f.write(f"# AI Article – {today}\n\n")
+        f.write(result)
 
-# Zapisz do pliku
-today = datetime.now().strftime("%Y-%m-%d")
-os.makedirs("articles", exist_ok=True)
-with open(f"articles/article-{today}.md", "w", encoding="utf-8") as f:
-    f.write(f"# AI Article ({today})\n\n")
-    f.write(result)
+    print(f"🔍 ✔ Artykuł zapisany: {filename}")
+
+if __name__ == "__main__":
+    main()
