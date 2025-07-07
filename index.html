@@ -1,11 +1,50 @@
+---
+layout: default
+title: Strona Główna
+---
+
 <!DOCTYPE html>
 <html lang="pl">
 <head>
-    <meta charset="UTF-8">
-    <title>Automatyczny Blog</title>
+  <meta charset="UTF-8">
+  <title>AI Artykuły – SuperKrzesło</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 2em auto;
+      max-width: 800px;
+      line-height: 1.6;
+      color: #333;
+    }
+    h1 {
+      color: #007acc;
+    }
+    a {
+      text-decoration: none;
+      color: #007acc;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+    .article-date {
+      font-size: 0.9em;
+      color: #777;
+    }
+  </style>
 </head>
 <body>
-    <h1>Witamy na blogu o nowych technologiach</h1>
-    <p>Nowe artykuły pojawiają się codziennie o 8:00.</p>
+
+  <h1>AI Artykuły</h1>
+  <p>Witaj! Tutaj znajdziesz automatycznie generowane artykuły AI.</p>
+
+  <ul>
+    {% for article in site.articles reversed %}
+      <li>
+        <a href="{{ article.url }}">{{ article.title }}</a><br>
+        <span class="article-date">{{ article.date | date: "%d.%m.%Y" }}</span>
+      </li>
+    {% endfor %}
+  </ul>
+
 </body>
 </html>
