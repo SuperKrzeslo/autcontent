@@ -26,7 +26,7 @@ prompt = (
 )
 
 # === Model TinyLlama-1.1B-Chat-v1.0 ===
-model_name = "TinyLlama/TinyLlama-1.1B-Chat-v1.0"
+model_name = "Qwen/Qwen2-7B-Instruct"
 
 hf_token = os.getenv("HUGGINGFACE_TOKEN")
 
