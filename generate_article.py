@@ -14,9 +14,9 @@ today = datetime.now().strftime("%Y-%m-%d")
 seed = random.randint(1000, 9999)
 prompt = f"Nowości w świecie technologii na dzień {today}. Napisz profesjonalny artykuł z leadem i wnioskami."
 
-# === Token z Hugging Face z ENV ===
+# === Token z Hugging Face (pobierany z ENV) ===
 hf_token = os.getenv("HUGGINGFACE_TOKEN")
-model_name = "tiiuae/falcon-rw-1b"  # Gwen 2.5 ≈ Gemma 2B
+model_name = "mistralai/Mistral-7B-Instruct-v0.2"
 
 # === Wczytaj model ===
 tokenizer = AutoTokenizer.from_pretrained(model_name, token=hf_token)
@@ -34,7 +34,7 @@ generator = pipeline(
     seed=seed
 )
 
-# === Generuj treść ===
+# === Generuj tekst ===
 response = generator(
     prompt,
     max_new_tokens=512,
@@ -45,16 +45,17 @@ response = generator(
     num_return_sequences=1
 )[0]["generated_text"]
 
-# === Sanitizacja i nazwy ===
+# === Sanitizacja ===
 def sanitize(text):
     return re.sub(r'[^\w\s-]', '', text).strip()
 
 title = sanitize(response.strip().split('.')[0])[:60]
 lead = response.strip().split('.')[0] + "."
+
 filename = f"article-{today}-{seed}.html"
 filepath = os.path.join(ARTICLES_DIR, filename)
 
-# === HTML artykułu ===
+# === HTML pełnego artykułu ===
 article_html = f"""<!DOCTYPE html>
 <html lang="pl">
 <head>
@@ -75,7 +76,7 @@ article_html = f"""<!DOCTYPE html>
 with open(filepath, "w", encoding="utf-8") as f:
     f.write(article_html)
 
-# === Miniaturka do strony głównej ===
+# === Miniaturka do index.html ===
 thumbnail_html = f"""
 <div class="card">
     <img src="https://source.unsplash.com/400x200/?technology,ai" alt="AI Image">
@@ -117,7 +118,7 @@ else:
     with open(index_path, "w", encoding="utf-8") as f:
         f.write(updated_html)
 
-# === Styl (jeśli brak) ===
+# === Styl CSS jeśli brak ===
 style_path = os.path.join(SITE_DIR, "style.css")
 if not os.path.exists(style_path):
     with open(style_path, "w", encoding="utf-8") as f:
