@@ -12,35 +12,36 @@ os.makedirs(ARTICLES_DIR, exist_ok=True)
 
 today = datetime.now().strftime("%Y-%m-%d")
 seed = random.randint(1000, 9999)
-prompt = f"Nowości w świecie technologii na dzień {today}. Napisz profesjonalny artykuł z leadem i wnioskami w języku polskim."
 
-# === Ustaw seed dla powtarzalności
-torch.manual_seed(seed)
+# Prompt - historia o Grzegorzu Braunie, w stylu śmiesznym i zabawnym, po polsku
+prompt = (
+    f"Napisz śmieszną, zabawną historyjkę o Grzegorzu Braunie, "
+    f"uwzględniając najważniejsze wydarzenia z ostatniego czasu na dzień {today}. "
+    f"Tekst ma być w języku polskim."
+)
 
-# === Token dostępu z Hugging Face (pobierany z ENV)
-hf_token = os.environ.get("HUGGINGFACE_TOKEN")
-if not hf_token:
-    raise ValueError("❌ Brak zmiennej środowiskowej HUGGINGFACE_TOKEN")
+# === Wczytaj model Gwen 2.5 (Gemma 2) ===
+model_name = "google/gemma-2b"  # Gwen 2.5 = Gemma 2 (Open Weight 2.5B model)
 
-# === Wczytaj model Gwen 2.5 (Gemma 2B)
-model_name = "google/gemma-2b"
+hf_token = os.getenv("HUGGINGFACE_TOKEN")
 
-tokenizer = AutoTokenizer.from_pretrained(model_name, token=hf_token)
+tokenizer = AutoTokenizer.from_pretrained(model_name, use_auth_token=hf_token)
 model = AutoModelForCausalLM.from_pretrained(
     model_name,
     torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32,
     device_map="auto",
-    token=hf_token,
+    use_auth_token=hf_token
 )
 
 generator = pipeline(
     "text-generation",
     model=model,
-    tokenizer=tokenizer
+    tokenizer=tokenizer,
+    # seed jest nieobsługiwany w pipeline, więc usuwamy
 )
 
-# === Generuj tekst
-response = generator(
+# === Generuj tekst ===
+generated = generator(
     prompt,
     max_new_tokens=512,
     do_sample=True,
@@ -50,17 +51,20 @@ response = generator(
     num_return_sequences=1
 )[0]["generated_text"]
 
-# === Sanitizacja
+# Usuń prompt z wygenerowanego tekstu, zostaw tylko artykuł
+response = generated.replace(prompt, "").strip()
+
+# === Sanitizacja tytułu i leada ===
 def sanitize(text):
     return re.sub(r'[^\w\s-]', '', text).strip()
 
-title = sanitize(response.strip().split('.')[0])[:60]
-lead = response.strip().split('.')[0] + "."
+title = sanitize(response.split('.')[0])[:60]
+lead = response.split('.')[0] + "."
 
 filename = f"article-{today}-{seed}.html"
 filepath = os.path.join(ARTICLES_DIR, filename)
 
-# === HTML artykułu
+# === HTML pełnego artykułu ===
 article_html = f"""<!DOCTYPE html>
 <html lang="pl">
 <head>
@@ -81,10 +85,10 @@ article_html = f"""<!DOCTYPE html>
 with open(filepath, "w", encoding="utf-8") as f:
     f.write(article_html)
 
-# === Miniaturka
+# === Miniaturka do index.html ===
 thumbnail_html = f"""
 <div class="card">
-    <img src="https://source.unsplash.com/400x200/?technology,ai" alt="AI Image">
+    <img src="https://source.unsplash.com/400x200/?funny,politics" alt="Zabawne zdjęcie">
     <div class="card-content">
         <h3>{title}</h3>
         <p>{lead[:120]}...</p>
@@ -93,7 +97,7 @@ thumbnail_html = f"""
 </div>
 """
 
-# === Aktualizacja index.html
+# === Aktualizacja index.html ===
 index_path = os.path.join(SITE_DIR, "index.html")
 if not os.path.exists(index_path):
     with open(index_path, "w", encoding="utf-8") as f:
@@ -123,7 +127,7 @@ else:
     with open(index_path, "w", encoding="utf-8") as f:
         f.write(updated_html)
 
-# === Styl CSS jeśli brak
+# === Styl CSS jeśli brak ===
 style_path = os.path.join(SITE_DIR, "style.css")
 if not os.path.exists(style_path):
     with open(style_path, "w", encoding="utf-8") as f:
