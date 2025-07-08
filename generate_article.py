@@ -15,9 +15,14 @@ seed = random.randint(1000, 9999)
 
 # Prompt - historia o Grzegorzu Braunie, w stylu śmiesznym i zabawnym, po polsku
 prompt = (
-    f"Napisz śmieszną, zabawną i faktyczną historyjkę o Grzegorzu Braunie, "
+    f"Napisz śmieszną, zabawną i faktyczną historyjkę o Grzegorzu Braunie polityku w polsce "
     f"uwzględniając najważniejsze wydarzenia z ostatniego czasu na dzień {today}. "
     f"Tekst ma być w języku polskim, bez powtarzania promptu."
+    f"Napisz krótką, zabawną i spójną historyjkę o Grzegorzu Braunie, "
+    f"uwzględniając najważniejsze wydarzenia z ostatnich dni na dzień {today}. "
+    f"Opowiedz ją w stylu lekkim i humorystycznym, używając naturalnego języka polskiego. "
+    f"Unikaj powtórzeń i chaotycznych fragmentów. "
+    f"Zakończ historyjkę krótkim podsumowaniem, co Grzegorz myśli o tych wydarzeniach.
 )
 
 # === Model TinyLlama-1.1B-Chat-v1.0 ===
