@@ -50,20 +50,8 @@ output = generator(
     num_return_sequences=1
 )[0]["generated_text"]
 
-# === Czyszczenie wygenerowanego tekstu ===
-def clean_text(text):
-    text = text.replace(prompt, "").strip()
-    lines = text.split('\n')
-    seen = set()
-    result = []
-    for line in lines:
-        if line.strip() and line not in seen:
-            result.append(line.strip())
-            seen.add(line)
-    cleaned = " ".join(result)
-    if not cleaned or "Braun" not in cleaned:
-        return "Nie udało się wygenerować sensownej historyjki o Braunie. Spróbuj ponownie."
-    return cleaned
+response_raw = output.replace(prompt, "").strip()
+response = response_raw if response_raw else "[⚠️ Model nie wygenerował żadnej treści.]"
 
 response = clean_text(output)
 
