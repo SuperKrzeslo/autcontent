@@ -21,7 +21,7 @@ prompt = (
 )
 
 # === Model TinyLlama-1.1B-Chat-v1.0 ===
-model_name = "TheBloke/TinyLlama-1.1B-Chat-v1.0"
+model_name = "TinyLlama/TinyLlama-1.1B-Chat-v1.0"
 
 hf_token = os.getenv("HUGGINGFACE_TOKEN")
 
