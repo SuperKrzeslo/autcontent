@@ -13,68 +13,61 @@ os.makedirs(ARTICLES_DIR, exist_ok=True)
 today = datetime.now().strftime("%Y-%m-%d")
 seed = random.randint(1000, 9999)
 
-# === Prompt ===
+# === Prompt: satyryczna historia o Grzegorzu Braunie ===
 prompt = (
     f"Napisz zabawną, satyryczną historyjkę o Grzegorzu Braunie, pośle Konfederacji. "
     f"Uwzględnij najważniejsze wydarzenia z ostatnich dni (do {today}). "
-    f"Tekst ma być humorystyczny, kreatywny i w języku polskim. "
-    f"Nie pisz suchych faktów historycznych, tylko zabawną opowieść, jakbyś opowiadał ją znajomym przy kawie. "
-    f"Nie wymieniaj listy książek, tylko skoncentruj się na zabawnych zdarzeniach z udziałem Brauna, np. gaszenie świec, wypowiedzi sejmowe, memiczne sytuacje."
+    f"Tekst ma być humorystyczny, lekki, w stylu memów politycznych, opowiadany jak anegdota. "
+    f"Pisz po polsku. Nie dodawaj faktów historycznych ani tytułów książek. "
 )
 
-# === Model: Mistral 7B Instruct ===
-model_name = "mistralai/Mistral-7B-Instruct-v0.1"
+# === Używamy modelu TinyLlama ===
+model_name = "TinyLlama/TinyLlama-1.1B-Chat-v1.0"
 hf_token = os.getenv("HUGGINGFACE_TOKEN")
 
-tokenizer = AutoTokenizer.from_pretrained(model_name, token=hf_token)
+tokenizer = AutoTokenizer.from_pretrained(model_name, use_auth_token=hf_token)
 model = AutoModelForCausalLM.from_pretrained(
     model_name,
     torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32,
     device_map="auto",
-    token=hf_token
+    use_auth_token=hf_token
 )
 
 generator = pipeline(
     "text-generation",
     model=model,
-    tokenizer=tokenizer
+    tokenizer=tokenizer,
 )
 
-# === Generowanie tekstu ===
-generated = generator(
+# === Generuj tekst ===
+output = generator(
     prompt,
-    max_new_tokens=700,
+    max_new_tokens=512,
     do_sample=True,
-    temperature=0.85,
+    temperature=0.9,
     top_k=50,
     top_p=0.95,
     num_return_sequences=1
 )[0]["generated_text"]
 
-# === Czyszczenie tekstu ===
+# === Czyszczenie wygenerowanego tekstu ===
 def clean_text(text):
-    # usuń prompt jeśli nadal jest obecny
-    cleaned = text.replace(prompt, "").strip()
-
-    # usuń powtarzające się linijki
-    lines = cleaned.split('\n')
+    text = text.replace(prompt, "").strip()
+    lines = text.split('\n')
     seen = set()
-    unique_lines = []
+    result = []
     for line in lines:
-        line = line.strip()
-        if line and line not in seen:
-            unique_lines.append(line)
+        if line.strip() and line not in seen:
+            result.append(line.strip())
             seen.add(line)
-    cleaned = "\n".join(unique_lines)
-
-    # sanity check
-    if "Grzegorz Braun" not in cleaned:
-        cleaned = "Nie udało się wygenerować sensownego tekstu. Spróbuj ponownie."
+    cleaned = " ".join(result)
+    if not cleaned or "Braun" not in cleaned:
+        return "Nie udało się wygenerować sensownej historyjki o Braunie. Spróbuj ponownie."
     return cleaned
 
-response = clean_text(generated)
+response = clean_text(output)
 
-# === Tytuł i lead ===
+# === Sanitizacja tytułu i leada ===
 def sanitize(text):
     return re.sub(r'[^\w\s-]', '', text).strip()
 
@@ -105,7 +98,7 @@ article_html = f"""<!DOCTYPE html>
 with open(filepath, "w", encoding="utf-8") as f:
     f.write(article_html)
 
-# === Miniaturka na index.html ===
+# === Miniaturka ===
 thumbnail_html = f"""
 <div class="card">
     <img src="https://source.unsplash.com/400x200/?funny,politics" alt="Zabawne zdjęcie">
@@ -131,7 +124,7 @@ if not os.path.exists(index_path):
 <body>
     <header>
         <h1>AutContent - Artykuły generowane przez AI</h1>
-        <p>Codzienna dawka humoru politycznego</p>
+        <p>Codzienna dawka śmiesznych historii politycznych</p>
     </header>
     <main id="articles">
         {thumbnail_html}
@@ -142,11 +135,12 @@ if not os.path.exists(index_path):
 else:
     with open(index_path, "r", encoding="utf-8") as f:
         html = f.read()
+
     updated_html = html.replace("</main>", f"{thumbnail_html}\n</main>")
     with open(index_path, "w", encoding="utf-8") as f:
         f.write(updated_html)
 
-# === Styl CSS jeśli brak ===
+# === Styl jeśli nie istnieje ===
 style_path = os.path.join(SITE_DIR, "style.css")
 if not os.path.exists(style_path):
     with open(style_path, "w", encoding="utf-8") as f:
