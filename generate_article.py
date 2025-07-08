@@ -12,7 +12,7 @@ os.makedirs(ARTICLES_DIR, exist_ok=True)
 
 today = datetime.now().strftime("%Y-%m-%d")
 seed = random.randint(1000, 9999)
-prompt = f"Nowości w świecie technologii na dzień {today}. Napisz profesjonalny artykuł z leadem i wnioskami."
+prompt = f"Nowości w świecie technologii na dzień {today}. Napisz profesjonalny artykuł z leadem i wnioskami w języku polskim."
 
 # === Ustaw seed dla powtarzalności
 torch.manual_seed(seed)
