@@ -13,37 +13,37 @@ os.makedirs(ARTICLES_DIR, exist_ok=True)
 today = datetime.now().strftime("%Y-%m-%d")
 seed = random.randint(1000, 9999)
 
-# Prompt - historia o Grzegorzu Braunie, w stylu śmiesznym i zabawnym, po polsku
+# === Prompt ===
 prompt = (
-    f"Napisz śmieszną, zabawną historyjkę o Grzegorzu Braunie, "
-    f"uwzględniając najważniejsze wydarzenia z ostatniego czasu na dzień {today}. "
-    f"Tekst ma być w języku polskim."
+    f"Napisz zabawną, satyryczną historyjkę o Grzegorzu Braunie, pośle Konfederacji. "
+    f"Uwzględnij najważniejsze wydarzenia z ostatnich dni (do {today}). "
+    f"Tekst ma być humorystyczny, kreatywny i w języku polskim. "
+    f"Nie pisz suchych faktów historycznych, tylko zabawną opowieść, jakbyś opowiadał ją znajomym przy kawie. "
+    f"Nie wymieniaj listy książek, tylko skoncentruj się na zabawnych zdarzeniach z udziałem Brauna, np. gaszenie świec, wypowiedzi sejmowe, memiczne sytuacje."
 )
 
-# === Wczytaj model Gwen 2.5 (Gemma 2) ===
-model_name = "google/gemma-2b"  # Gwen 2.5 = Gemma 2 (Open Weight 2.5B model)
-
+# === Model: Mistral 7B Instruct ===
+model_name = "mistralai/Mistral-7B-Instruct-v0.1"
 hf_token = os.getenv("HUGGINGFACE_TOKEN")
 
-tokenizer = AutoTokenizer.from_pretrained(model_name, use_auth_token=hf_token)
+tokenizer = AutoTokenizer.from_pretrained(model_name, token=hf_token)
 model = AutoModelForCausalLM.from_pretrained(
     model_name,
     torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32,
     device_map="auto",
-    use_auth_token=hf_token
+    token=hf_token
 )
 
 generator = pipeline(
     "text-generation",
     model=model,
-    tokenizer=tokenizer,
-    # seed jest nieobsługiwany w pipeline, więc usuwamy
+    tokenizer=tokenizer
 )
 
-# === Generuj tekst ===
+# === Generowanie tekstu ===
 generated = generator(
     prompt,
-    max_new_tokens=512,
+    max_new_tokens=700,
     do_sample=True,
     temperature=0.85,
     top_k=50,
@@ -51,10 +51,30 @@ generated = generator(
     num_return_sequences=1
 )[0]["generated_text"]
 
-# Usuń prompt z wygenerowanego tekstu, zostaw tylko artykuł
-response = generated.replace(prompt, "").strip()
+# === Czyszczenie tekstu ===
+def clean_text(text):
+    # usuń prompt jeśli nadal jest obecny
+    cleaned = text.replace(prompt, "").strip()
 
-# === Sanitizacja tytułu i leada ===
+    # usuń powtarzające się linijki
+    lines = cleaned.split('\n')
+    seen = set()
+    unique_lines = []
+    for line in lines:
+        line = line.strip()
+        if line and line not in seen:
+            unique_lines.append(line)
+            seen.add(line)
+    cleaned = "\n".join(unique_lines)
+
+    # sanity check
+    if "Grzegorz Braun" not in cleaned:
+        cleaned = "Nie udało się wygenerować sensownego tekstu. Spróbuj ponownie."
+    return cleaned
+
+response = clean_text(generated)
+
+# === Tytuł i lead ===
 def sanitize(text):
     return re.sub(r'[^\w\s-]', '', text).strip()
 
@@ -64,7 +84,7 @@ lead = response.split('.')[0] + "."
 filename = f"article-{today}-{seed}.html"
 filepath = os.path.join(ARTICLES_DIR, filename)
 
-# === HTML pełnego artykułu ===
+# === HTML artykułu ===
 article_html = f"""<!DOCTYPE html>
 <html lang="pl">
 <head>
@@ -85,7 +105,7 @@ article_html = f"""<!DOCTYPE html>
 with open(filepath, "w", encoding="utf-8") as f:
     f.write(article_html)
 
-# === Miniaturka do index.html ===
+# === Miniaturka na index.html ===
 thumbnail_html = f"""
 <div class="card">
     <img src="https://source.unsplash.com/400x200/?funny,politics" alt="Zabawne zdjęcie">
@@ -111,7 +131,7 @@ if not os.path.exists(index_path):
 <body>
     <header>
         <h1>AutContent - Artykuły generowane przez AI</h1>
-        <p>Codzienna dawka wiedzy o sztucznej inteligencji</p>
+        <p>Codzienna dawka humoru politycznego</p>
     </header>
     <main id="articles">
         {thumbnail_html}
@@ -122,7 +142,6 @@ if not os.path.exists(index_path):
 else:
     with open(index_path, "r", encoding="utf-8") as f:
         html = f.read()
-
     updated_html = html.replace("</main>", f"{thumbnail_html}\n</main>")
     with open(index_path, "w", encoding="utf-8") as f:
         f.write(updated_html)
