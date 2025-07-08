@@ -13,16 +13,16 @@ os.makedirs(ARTICLES_DIR, exist_ok=True)
 today = datetime.now().strftime("%Y-%m-%d")
 seed = random.randint(1000, 9999)
 
-# === Prompt: satyryczna historia o Grzegorzu Braunie ===
+# Prompt - historia o Grzegorzu Braunie, w stylu śmiesznym i zabawnym, po polsku
 prompt = (
-    f"Napisz zabawną, satyryczną historyjkę o Grzegorzu Braunie, pośle Konfederacji. "
-    f"Uwzględnij najważniejsze wydarzenia z ostatnich dni (do {today}). "
-    f"Tekst ma być humorystyczny, lekki, w stylu memów politycznych, opowiadany jak anegdota. "
-    f"Pisz po polsku. Nie dodawaj faktów historycznych ani tytułów książek. "
+    f"Napisz śmieszną, zabawną i faktyczną historyjkę o Grzegorzu Braunie, "
+    f"uwzględniając najważniejsze wydarzenia z ostatniego czasu na dzień {today}. "
+    f"Tekst ma być w języku polskim, bez powtarzania promptu."
 )
 
-# === Używamy modelu TinyLlama ===
-model_name = "TinyLlama/TinyLlama-1.1B-Chat-v1.0"
+# === Model TinyLlama-1.1B-Chat-v1.0 ===
+model_name = "TheBloke/TinyLlama-1.1B-Chat-v1.0"
+
 hf_token = os.getenv("HUGGINGFACE_TOKEN")
 
 tokenizer = AutoTokenizer.from_pretrained(model_name, use_auth_token=hf_token)
@@ -50,22 +50,25 @@ output = generator(
     num_return_sequences=1
 )[0]["generated_text"]
 
+# === Pokazujemy dokładnie co model wygenerował, bez ukrywania ===
 response_raw = output.replace(prompt, "").strip()
 response = response_raw if response_raw else "[⚠️ Model nie wygenerował żadnej treści.]"
 
-response = clean_text(output)
-
 # === Sanitizacja tytułu i leada ===
 def sanitize(text):
-    return re.sub(r'[^\w\s-]', '', text).strip()
+    text = re.sub(r'[^\w\s-]', '', text)  # usuń znaki specjalne
+    text = re.sub(r'\s+', ' ', text)  # usuń nadmiarowe spacje
+    return text.strip()
 
-title = sanitize(response.split('.')[0])[:60]
-lead = response.split('.')[0] + "."
+# Używamy pierwszego zdania lub 60 znaków jako tytułu
+first_sentence = response.split('.')[0] if '.' in response else response
+title = sanitize(first_sentence)[:60]
+lead = first_sentence + "."
 
 filename = f"article-{today}-{seed}.html"
 filepath = os.path.join(ARTICLES_DIR, filename)
 
-# === HTML artykułu ===
+# === HTML pełnego artykułu ===
 article_html = f"""<!DOCTYPE html>
 <html lang="pl">
 <head>
@@ -86,7 +89,7 @@ article_html = f"""<!DOCTYPE html>
 with open(filepath, "w", encoding="utf-8") as f:
     f.write(article_html)
 
-# === Miniaturka ===
+# === Miniaturka do index.html ===
 thumbnail_html = f"""
 <div class="card">
     <img src="https://source.unsplash.com/400x200/?funny,politics" alt="Zabawne zdjęcie">
@@ -112,7 +115,7 @@ if not os.path.exists(index_path):
 <body>
     <header>
         <h1>AutContent - Artykuły generowane przez AI</h1>
-        <p>Codzienna dawka śmiesznych historii politycznych</p>
+        <p>Codzienna dawka wiedzy o sztucznej inteligencji</p>
     </header>
     <main id="articles">
         {thumbnail_html}
@@ -128,7 +131,7 @@ else:
     with open(index_path, "w", encoding="utf-8") as f:
         f.write(updated_html)
 
-# === Styl jeśli nie istnieje ===
+# === Styl CSS jeśli brak ===
 style_path = os.path.join(SITE_DIR, "style.css")
 if not os.path.exists(style_path):
     with open(style_path, "w", encoding="utf-8") as f:
