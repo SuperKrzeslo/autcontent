@@ -23,7 +23,7 @@ jobs:
 
       - name: 🔧 Install dependencies
         run: |
-          pip install torch transformers
+          pip install torch transformers accelerate markdown2
 
       - name: 📝 Generate AI article
         env:
@@ -35,7 +35,7 @@ jobs:
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add site/
+          git add articles/ site/
           git commit -m "🧠 Dodano nowy artykuł AI i zaktualizowano stronę" || echo "Brak zmian"
           git push
 
