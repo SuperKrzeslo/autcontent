@@ -22,7 +22,7 @@ prompt = (
     f"uwzględniając najważniejsze wydarzenia z ostatnich dni na dzień {today}. "
     f"Opowiedz ją w stylu lekkim i humorystycznym, używając naturalnego języka polskiego. "
     f"Unikaj powtórzeń i chaotycznych fragmentów. "
-    f"Zakończ historyjkę krótkim podsumowaniem, co Grzegorz myśli o tych wydarzeniach.
+    f"Zakończ historyjkę krótkim podsumowaniem, co Grzegorz myśli o tych wydarzeniach."
 )
 
 # === Model TinyLlama-1.1B-Chat-v1.0 ===
